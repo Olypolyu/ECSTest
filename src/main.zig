@@ -76,7 +76,6 @@ const GameState = struct {
     }
 };
 
-
 // okay, so each pipe needs a position and a bounding box,
 // the bird needs a position a bounding box and a texture. 
 // i guess i will have a bird and a array of pipes.
@@ -121,7 +120,7 @@ pub fn main() !void {
     }
 }
 
-fn makePipeCollisions(pipes: *[]Pipe, arena: *const std.mem.Allocator) ?*[]rl.Rectangle {
+fn makePipeCollisions(pipes: *[]Pipe, arena: *const std.mem.Allocator) ?[]rl.Rectangle {
     // creates a array containing the collisions for every pipe according to state.
     // Should be called every frame. The array is detroyed afterwards. 
 
@@ -151,7 +150,7 @@ fn makePipeCollisions(pipes: *[]Pipe, arena: *const std.mem.Allocator) ?*[]rl.Re
         );
     }
 
-    return &pipeCollisions;
+    return pipeCollisions;
 }
 
 test "makePipeCollisions" {
@@ -195,7 +194,7 @@ fn attemptMakeNewPipe(state: *GameState) void {
         const openingLength = @max((height * 0.75) * state.rand.float(f32), height * 0.25);
         const openingDistanceGround = (height - openingLength) * state.rand.float(f32);
 
-         state.pipes.append(
+        state.pipes.append(
             Pipe {
                 .position = rl.Vector2.init(
                     @floor(width),
@@ -245,14 +244,13 @@ fn doGameLogic(state: *GameState) !void {
 
     const arena = state.getArena() catch @panic("Failed to get Allocator");
 
-    const pipes = makePipeCollisions(&state.pipes.items, arena);
-    state.currentPipeCollisions = pipes;
-
-    if (pipes) |p| {
+    var pipes = makePipeCollisions(&state.pipes.items, arena);
+    if (pipes) |*p| {
+        state.currentPipeCollisions = p;
         const birdCollision = bird.getCollisionBox();
         
-        for (p.*) | *pipe | {
-            bird.isDead = rl.checkCollisionRecs(pipe.*, birdCollision) or bird.isDead;
+        for (p.*) | pipe | {
+            bird.isDead = rl.checkCollisionRecs(pipe, birdCollision) or bird.isDead;
         }
     }
 
@@ -260,8 +258,6 @@ fn doGameLogic(state: *GameState) !void {
 
 fn PaintScreen(state: *GameState) !void {
     const arenaAlloc: std.mem.Allocator = (try state.getArena()).*;
-
-    //const width = rl.getScreenWidth();
 
     rl.beginDrawing();
     defer rl.endDrawing();

@@ -109,7 +109,7 @@ pub fn buildAndroid(b: *std.Build, target: std.Build.ResolvedTarget, optimize: s
 
     lib.root_module.linkSystemLibrary(
         "log",
-        .{.preferred_link_mode = .dynamic }.
+        .{.preferred_link_mode = .dynamic }
     );
 
     apk.addArtifact(lib);
