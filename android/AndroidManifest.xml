@@ -3,7 +3,7 @@
 <manifest 
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="@string/package_name"
+    package="com.github.olypolyu.crappybird"
 >
     <uses-feature android:glEsVersion="0x00020000" android:required="true"/>
     <uses-sdk android:minSdkVersion="9" />
