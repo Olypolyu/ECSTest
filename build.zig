@@ -8,20 +8,6 @@ const android_api = std.fmt.comptimePrint("{}", .{@intFromEnum(android_version)}
 
 const exe_name = "CrappyBird";
 
-fn Pair(T: type, R: type) type {
-    return struct {
-        first: T,
-        second: R,
-
-        fn init(first: T, second: R) Pair(T, R) {
-            return .{
-                .first = first,
-                .second = second,
-            };
-        }
-    };
-}
-
 pub fn build(b: *std.Build) void {
     const root_target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
@@ -145,7 +131,6 @@ pub fn buildNative(b: *std.Build, target: std.Build.ResolvedTarget, optimize: st
 
     const raylib_mod = raylib_dep.module("raylib");
     lib.root_module.addImport("raylib", raylib_mod);
-
 
     const run_step = b.step("run", "Run the application");
     
