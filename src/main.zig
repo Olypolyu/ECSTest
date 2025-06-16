@@ -2,6 +2,7 @@ const std = @import("std");
 const builtin = @import("builtin");
 const android = @import("android");
 const rl = @import("raylib");
+//const scrollingQueue = @import("./scrolling_queue.zig");
 
 const pipeWidth = 80;
 const pipeLipWitdh = pipeWidth + 20;
@@ -11,10 +12,6 @@ const Pipe = struct {
     position: rl.Vector2,
     up: bool = false,
 };
-
-const maxSpeed = 8;
-const jumpVec = rl.Vector2.init(0, -3);
-const gravity = rl.Vector2.init(0, 0.1);
 
 const Bird = struct {
     position: rl.Vector2,
@@ -30,15 +27,12 @@ var touchLast = false;
 
 fn birdShouldJump() bool {
     const touch = rl.getTouchPointCount() > 0;
-    const touched = touch != touchLast;
-    touchLast = touch;
-
-    std.log.info("toched: {} \nTouchLast: {} \nTouch: {} \n", .{ touched, touchLast, touch });
+    defer touchLast = touch;
 
     return rl.isMouseButtonPressed(rl.MouseButton.left) or
         rl.isMouseButtonPressed(rl.MouseButton.right) or
         rl.isKeyPressed(rl.KeyboardKey.space) or
-        touched;
+        touch != touchLast;
 }
 
 const GameScreen = enum {
@@ -56,6 +50,10 @@ const GameState = struct {
 
     screenHeight: u32 = 0,
     screenWidth: u32 = 0,
+    
+    maxSpeed: f32 = 8,
+    jumpVec: rl.Vector2 = rl.Vector2.init(0, -3),
+    gravity: rl.Vector2 = rl.Vector2.init(0, 0.1),
 
     distance: u32 = 0,
     speed: f32 = 1,
@@ -124,6 +122,10 @@ pub fn main() !void {
         state.screenHeight = @intCast(rl.getScreenHeight());
         state.screenWidth = @intCast(rl.getScreenWidth());
         state.arenaAlloc = &arena.allocator();
+
+        state.maxSpeed = @as(f32, @floatFromInt(state.screenHeight / 60));
+        state.jumpVec = rl.Vector2.init(0, - (state.maxSpeed * 0.60));
+        state.gravity = rl.Vector2.init(0, state.maxSpeed / 40);
 
         try doGameLogic(&state);
         try PaintScreen(&state);
@@ -207,14 +209,14 @@ fn doGameLogic(state: *GameState) !void {
 
     state.distance = state.distance + @as(u32, @intFromFloat(state.speed));
 
-    bird.speed = bird.speed.add(gravity);
-    if (birdShouldJump()) bird.speed = bird.speed.add(jumpVec);
-    bird.speed = bird.speed.clampValue(-maxSpeed, maxSpeed);
+    bird.speed = bird.speed.add(state.gravity);
+    if (birdShouldJump()) bird.speed = bird.speed.add(state.jumpVec);
+    bird.speed = bird.speed.clampValue(-state.maxSpeed, state.maxSpeed);
 
     const res = rl.Vector2.add(bird.position, bird.speed);
 
     if (res.y < -15) {
-        bird.speed = bird.speed.subtract(jumpVec);
+        bird.speed = bird.speed.subtract(state.jumpVec);
     }
     bird.position = res;
 
